@@ -1,0 +1,9 @@
+cd /data/mta/Script/Dumps/Scripts/
+
+setenv PYTHONPATH "/proj/sot/ska/arch/x86_64-linux_CentOS-5/lib/python2.7/site-packages"
+
+cp -f ./house_keeping/msids.list .
+cp -f ./house_keeping/otg-msids.list .
+
+/data/mta/Script/Dumps/Scripts/run_filter_scripts.py
+

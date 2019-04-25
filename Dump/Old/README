@@ -1,0 +1,179 @@
+
++++++++++++++++++++
+RDB Data Filtering
++++++++++++++++++++
+
+This directory holds scripts which extract OTG and CCDM related data
+from dump data (*Dump_EM_*)
+
+--------
+Scripts
+--------
+#---------------------------------------------------------------------------
+#--- creating trace log files
+#---------------------------------------------------------------------------
+
+filters_wrap_script     ---- setting environments
+filters_main_script     ---- run run_filter_scripts.py
+
+run_filter_scripts.py   ---- python script to copy unprocessed data from /dsops/GOT/input/
+                             and run a couple of acorn processes to create filtered data
+filters_wrap_script2    ---- setting environments
+filters_main_script2    ---- run otg prcoess and get ccdm data
+
+mv_files.perl           ---- move systemlog to house_keeping and *.tl to /data/mta/Script/Dumps/
+
+otg_proc.pl             ---- create OTG tracelogs and run gratstat.pl and cleano.pl
+
+gratstat.pl             ---- analyze OTG move
+
+cleano.pl               ---- clean up OTG move summary file and create summary plots and gratstat.html page
+
+/data/mta/www/mta_sim/Scripts/getdata ---- get CCDM data
+
+move_tl_files.py        ----  manage # of trail files in the directories
+
+#---------------------------------------------------------------------------
+#--- creating dea realated trace logs and dataseeker rdb files
+#---------------------------------------------------------------------------
+
+fiters_dea              ---- update dea rdb files for dataseeker
+
+prep.perl               ---- convert dump data into dea rdb data files using following scripts
+
+deahk.pl                --- convert dump data into ascii files
+
+out2in.pl               --- prepare prep.perl output for input into average.pl
+
+average.pl              --- take average and create rdb files
+
+getnrt                  --- Peter Ford's program to convert ACIS data. need access to
+                            lib/acisEng.ttm
+
+#---------------------------------------------------------------------------
+#--- ccdm, elbi_low, mups, pcad rdb related
+#---------------------------------------------------------------------------
+
+update_rdb.py           --- control script to run elbi_low, mups, pcad rdb related scripts
+
+pcadfilter.pl           --- create pcad rdb file
+
+ccdmfilter.pl           --- create ccdm rdb file
+
+maverage.pl             --- same as average.pl but specifically for mups and elvi
+
+filtersort2.pl          --- sort the output
+
+---------------------
+Environment Settings
+---------------------
+
+setascds
+
+setenv ASCDS_CONFIG_MTA_DATA "/home/ascds/DS.release/config/mta/data"
+setenv IPCL_DIR "/home/ascds/DS.release/config/tp_template/P011/"
+setenv ACORN_GUI "/home/ascds/DS.release/config/mta/acorn/scripts/"
+setenv LD_LIBRARY_PATH "/home/ascds/DS.release/lib:/home/ascds/DS.release/ots/lib:/soft/SYBASE_OSRV15.5/OCS-15_0/lib:/home/ascds/DS.release/otslib:/opt/X11R6/lib:/usr/lib64/alliance/lib"
+
+python script must be able to see /proj/sot/ska/bin/python
+
+$ENV{"ACISTOOLSDIR"}="/data/mta/Script/Dumps/Scripts"
+
+
+-----------
+Data Needed
+-----------
+
+/dsops/GOT/input/*Dump_EM_*                                 ---- main data which the scripts extract filtered data
+
+/data/mta/Script/Dumps/Scripts/hosue_keepnig/otg-msids.list ---- acorn filter setting for OTG
+/data/mta/Script/Dumps/Scripts/hosue_keepnig/msids.list     ---- acorn filter setting for CCDM
+/data/mta/Script/Dumps/Scripts/hosue_keepnig/processed_list ---- previously analyzed data list
+/data/mta/Script/Dumps/Scripts/hosue_keepnig/today_dump_files -- a list of today's dump data
+
+
+------
+Output
+------
+/data/mta/Script/Dumps/
+++++++++++++++++++++++++
+
+ELBILOW_<>.<>.tl
+ELBILOW_<>.<>.tl
+MUPSMUPS1_<>.<>.tl
+MUPSMUPS2_<>.<>.tl
+PRIMARYCCDM_<>.<>.tl
+PRIMARYPCAD_<>.<>.tl
+PRIMARYIRU_<>.<>.tl
+PRIMARYACIS_<>.<>.tl
+PRIMARYACIS_STAT_<>.<>.tl
+PRIMARYEPHIN_<>.<>.tl
+PRIMARYOTG_<>.<>.tl
+
+gratstat.lis
+
+
+/data/mta/Script/Dumps/OTG/TLsave/
+++++++++++++++++++++++++++++++++++++
+
+PRIMARYOTG_<>.<>.tl
+
+/data/mta/Script/Dumps/Dumps_mon/
+++++++++++++++++++++++++++++++++++
+
+MUPSMUPS2_<>.<>.tl
+PRIMARYCCDM_<>.<>.tl
+PRIMARYPCAD_<>.<>.tl
+PRIMARYIRU_<>.<>.tl
+PRIMARYACIS_<>.<>.tl
+PRIMARYACIS_STAT_<>.<>.tl
+
+
+/data/mta/DataSeeker/data/repository
++++++++++++++++++++++++++++++++++++++
+
+ccdmfilter.rdb
+elbi_low.rdb
+mups_1.rdb
+mups_2.rdb
+pcadfilter.rdb
+deahk_temp.rdb
+deahk_elec.rdb
+
+/data/mta/www/mta_otg
+++++++++++++++++++++++
+
+OTG_summary.rdb 
+OTG_filtered.rdb 
+OTG_sorted.rdb 
+OTG_summary.rdb 
+OTG_filtered_short.html 
+OTG_filtered.html 
+OTG_sorted.html 
+N_MOVES.gif 
+N_LONG.gif 
+T_LONG.gif 
+N_SHORT.gif 
+i4HPOSARO.gif 
+i4HPOSBRO.gif 
+f4HPOSARO.gif 
+f4HPOSBRO.gif 
+EMF_MIN_LONG.gif 
+EMF_AVG_LONG.gif 
+EMF_MAX_LONG.gif 
+EMF_MIN_SHORT.gif 
+EMF_AVG_SHORT.gif 
+EMF_MAX_SHORT.gif 
+OBC_ERRS.gif 
+
+
+--------
+Cron Job
+--------
+mta @ c3po-v
+30 * * * *  cd /data/mta/Script/Dumps/Scripts/; /data/mta/Script/Dumps/Scripts/filters_wrap_script    >> $HOME/Logs/filters_otg.cron
+40 * * * *  cd /data/mta/Script/Dumps/Scripts/; /data/mta/Script/Dumps/Scripts/filters_wrap_script2   >> $HOME/Logs/filters_otg.cron
+50 * * * *  cd /data/mta/Script/Dumps/Scripts/; /data/mta/Script/Dumps/Scripts/filters_dea            >> $HOME/Logs/filters_dea.cro
+
+mta @ r2d2-v
+04 2 * * *  cd /data/mta/Script/Dumps; /data/mta/Script/Dumps/Scripts/update_rdb.py >> $HOME/Logs/update_rdb.cron

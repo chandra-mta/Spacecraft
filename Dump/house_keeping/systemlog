@@ -1,0 +1,54 @@
+info           2019-04-24 23:32:11  ------------------------------------------------------------
+info           2019-04-24 23:32:11  Acorn Kernel Version 1.52
+info           2019-04-24 23:32:11  Command Line: /home/ascds/DS.release/bin/acorn -nOC otg-msids.list -f 2019_114_2318_115_0226_Dump_EM_34117 
+info           2019-04-24 23:32:11  Loading /home/ascds/DS.release/config/mta/data/cxcds_ipcl_translation.list
+info           2019-04-24 23:32:11  Loading Subsystem script otg-msids.list
+warning        2019-04-24 23:32:11  Could not open otg-msids.list
+info           2019-04-24 23:32:11  Loading /home/ascds/DS.release/config/tp_template/P011//tmsrment.txt
+info           2019-04-24 23:32:11  Loading /home/ascds/DS.release/config/tp_template/P011//tloc.txt
+info           2019-04-24 23:32:11  Loading /home/ascds/DS.release/config/tp_template/P011//tsmpl.txt
+info           2019-04-24 23:32:12  Loading /home/ascds/DS.release/config/tp_template/P011//tsc.txt
+info           2019-04-24 23:32:12  Loading /home/ascds/DS.release/config/tp_template/P011//tcal_sw.txt
+info           2019-04-24 23:32:12  Loading /home/ascds/DS.release/config/tp_template/P011//tlmt_sw.txt
+info           2019-04-24 23:32:12  Loading /home/ascds/DS.release/config/tp_template/P011//tlmt.txt
+info           2019-04-24 23:32:12  Loading /home/ascds/DS.release/config/tp_template/P011//tes_sw.txt
+info           2019-04-24 23:32:12  Loading /home/ascds/DS.release/config/tp_template/P011//tes.txt
+info           2019-04-24 23:32:12  Loading /home/ascds/DS.release/config/tp_template/P011//tpc.txt
+info           2019-04-24 23:32:12  Loading /home/ascds/DS.release/config/tp_template/P011//tpp.txt
+fatal          2019-04-24 23:32:12  ERROR, Unable to open input file: 2019_114_2318_115_0226_Dump_EM_34117
+info           2019-04-24 23:32:12  ------------------------------------------------------------
+info           2019-04-24 23:32:12  Acorn Kernel Version 1.52
+info           2019-04-24 23:32:12  Command Line: /home/ascds/DS.release/bin/acorn -nOC msids.list -f 2019_114_2318_115_0226_Dump_EM_34117 
+info           2019-04-24 23:32:12  Loading /home/ascds/DS.release/config/mta/data/cxcds_ipcl_translation.list
+info           2019-04-24 23:32:12  Loading Subsystem script msids.list
+warning        2019-04-24 23:32:12  Could not open msids.list
+info           2019-04-24 23:32:12  Loading /home/ascds/DS.release/config/tp_template/P011//tmsrment.txt
+info           2019-04-24 23:32:12  Loading /home/ascds/DS.release/config/tp_template/P011//tloc.txt
+info           2019-04-24 23:32:12  Loading /home/ascds/DS.release/config/tp_template/P011//tsmpl.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tsc.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tcal_sw.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tlmt_sw.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tlmt.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tes_sw.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tes.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tpc.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tpp.txt
+fatal          2019-04-24 23:32:13  ERROR, Unable to open input file: 2019_114_2318_115_0226_Dump_EM_34117
+info           2019-04-24 23:32:13  ------------------------------------------------------------
+info           2019-04-24 23:32:13  Acorn Kernel Version 1.52
+info           2019-04-24 23:32:13  Command Line: /home/ascds/DS.release/bin/acorn -nOC msids_sim.list -f 2019_114_2318_115_0226_Dump_EM_34117 
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/mta/data/cxcds_ipcl_translation.list
+info           2019-04-24 23:32:13  Loading Subsystem script msids_sim.list
+warning        2019-04-24 23:32:13  Could not open msids_sim.list
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tmsrment.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tloc.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tsmpl.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tsc.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tcal_sw.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tlmt_sw.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tlmt.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tes_sw.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tes.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tpc.txt
+info           2019-04-24 23:32:13  Loading /home/ascds/DS.release/config/tp_template/P011//tpp.txt
+fatal          2019-04-24 23:32:13  ERROR, Unable to open input file: 2019_114_2318_115_0226_Dump_EM_34117

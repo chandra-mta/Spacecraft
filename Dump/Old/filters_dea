@@ -1,0 +1,17 @@
+#! /bin/sh
+
+indir1=/dsops/GOT/
+indir2=/dsops/GOT/input/
+workdir=/data/mta/Script/Dumps
+ds_dir=/data/mta/DataSeeker/data/repository
+#     
+#--- process DEAHK data
+#
+deadir="/data/mta/Script/Dumps/Scripts/";
+PATH="$deadir:${PATH}"
+export PATH
+$deadir/prep.perl
+#    cp deahk_temp_in.tmp $workdir/Dumps_mon/IN
+#
+#cat xtmpnew >> $workdir/Dumps_mon/IN/xtmpnew
+#chmod g+w      $workdir/Dumps_mon/IN/xtmpnew
