@@ -9,7 +9,7 @@
         msgWindow.document.clear();
         msgWindow.document.write("<html><title>Trend plot:   "+imgname+"</TITLE>");
         msgWindow.document.write("<body>");
-        msgWindow.document.write("<img src='http://cxc.harvard.edu/mta_days/mta_otg/OTG_Plots/"+imgname+"' border =0 style='width:90%;'><p></p></body></hvtml>")
+        msgWindow.document.write("<img src='https://cxc.harvard.edu/mta_days/mta_otg/OTG_Plots/"+imgname+"' border =0 style='width:90%;'><p></p></body></hvtml>")
         msgWindow.document.close();
         msgWindow.focus();
     }
@@ -40,17 +40,17 @@ movements and the "All Data" will show all data since year 2000.
 </div>
 
 <div style='margin-top:30px;'>
-<a href='http://cxc.harvard.edu/mta_days//mta_otg/OTG_filtered.rdb'>See All Data</a>
+<a href='https://cxc.harvard.edu/mta_days//mta_otg/OTG_filtered.rdb'>See All Data</a>
 </div>
 
 <h3>Example Plots</h3>
 <div style='text-align:center;'>
 <a href='javascript:WindowOpener("N_MOVES_plot.png")'>
-<img src='http://cxc.harvard.edu/mta_days//mta_otg/OTG_Plots/N_MOVES_plot.png' style="width:45%;">
+<img src='https://cxc.harvard.edu/mta_days//mta_otg/OTG_Plots/N_MOVES_plot.png' style="width:45%;">
 </a>
 
 <a href='javascript:WindowOpener("N_SHORT_plot.png")'>
-<img src='http://cxc.harvard.edu/mta_days//mta_otg/OTG_Plots/N_SHORT_plot.png' style="width:45%;">
+<img src='https://cxc.harvard.edu/mta_days//mta_otg/OTG_Plots/N_SHORT_plot.png' style="width:45%;">
 </a>
 </div>
 

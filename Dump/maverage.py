@@ -1,4 +1,4 @@
-#!/usr/bin/env /proj/sot/ska/bin/python
+#!/usr/bin/env /data/mta/Script/Python3.6/envs/ska3/bin/python
 
 #############################################################################################
 #                                                                                           #
@@ -6,7 +6,7 @@
 #                                                                                           #
 #               author: t. isobe (tisobe@cfa.harvard.edu)                                   #
 #                                                                                           #
-#               last update: Feb 21, 2019                                                   #
+#               last update: Jun 26, 2019                                                   #
 #                                                                                           #
 #############################################################################################
 
@@ -20,25 +20,20 @@ import math
 import numpy
 import time
 import Chandra.Time
-import unittest
 
 path = '/data/mta/Script/Dumps/Scripts/house_keeping/dir_list'
-f    = open(path, 'r')
-data = [line.strip() for line in f.readlines()]
-f.close()
+with open(path, 'r') as f:
+    data = [line.strip() for line in f.readlines()]
 
 for ent in data:
     atemp = re.split(':', ent)
     var  = atemp[1].strip()
     line = atemp[0].strip()
-    exec "%s = %s" %(var, line)
+    exec("%s = %s" %(var, line))
 
 sys.path.append(bin_dir)
-#
-#--- temp writing file name
-#
-rtail    = int(time.time()*random.random())
-zspace   = '/tmp/zspace' + str(rtail)
+sys.path.append(mta_dir)
+import mta_common_functions as mcf
 
 resolution = 300
 
@@ -60,14 +55,14 @@ def maverage(infile, outfile):
 #
 #--- read input file names
 #
-    data_files = read_data_file(infile)
+    data_files = mcf.read_data_file(infile)
 
     if len(data_files) == 0:
         return 'NA'
 #
 #--- get column names
 #
-    out   = read_data_file(data_files[0])
+    out   = mcf.read_data_file(data_files[0])
     cols  = re.split('\s+', out[0])
     ncols = cols[1:]
     nlen  = len(ncols)
@@ -86,13 +81,13 @@ def maverage(infile, outfile):
         hdr1  = hline + '\n'
         hdr2  = nline + '\n'
 
-        fo   = open(outfile, 'w')
-        fo.write(hdr1)
-        fo.write(hdr2)
-        fo.close()
+        with open(outfile, 'w') as fo:
+            fo.write(hdr1)
+            fo.write(hdr2)
+        
         lastentry = 0.0
     else:
-        data     = read_data_file(outfile)
+        data     = mcf.read_data_file(outfile)
         atemp    = re.split('\s+', data[-1])
         try:
             lastentry = float(atemp[0])
@@ -101,8 +96,7 @@ def maverage(infile, outfile):
 #
 #--- append new data
 #
-    fo   = open(outfile, 'a')
-
+    sline = ''
     save = []
     for k in range(0, nlen):
         save.append([])
@@ -111,7 +105,7 @@ def maverage(infile, outfile):
     lasttime = 0.0
     for cfile in data_files:
         try:
-            data = read_data_file(cfile)
+            data = mcf.read_data_file(cfile)
         except:
             continue
 
@@ -142,11 +136,19 @@ def maverage(infile, outfile):
                 line  = "%8e\t%d" % (atime, ncnt)
 
                 for m in  range(0, nlen):
-                    avg = numpy.mean(save[m])
-                    std = numpy.std(save[m])
+                    if len(save[m]) > 0:
+                        try:
+                            avg = numpy.mean(save[m])
+                            std = numpy.std(save[m])
+                        except:
+                            avg = 0.0
+                            std = 0.0
+                    else:
+                        avg = 0.0
+                        std = 0.0
                     line = line + "\t%.4f\t%.5f" % (avg, std)
-                line = line + '\n'
-                fo.write(line)
+                line  = line + '\n'
+                sline = sline + line
     
                 for m in range(0, nlen):
                     save[m] =  [d_dict[ncols[m]][k]]
@@ -160,14 +162,23 @@ def maverage(infile, outfile):
         line  = "%8e\t%d" % (atime, ncnt)
 
         for k in  range(0, nlen):
-            avg  = numpy.mean(save[k])
-            std  = numpy.std(save[k])
+            if len(save[k]) > 0:
+                try:
+                    avg  = numpy.mean(save[k])
+                    std  = numpy.std(save[k])
+                except:
+                    avg  = 0.0
+                    std  = 0.0
+            else:
+                avg = 0.0
+                std = 0.0
             line = line + "\t%.4f\t%.5f" % (avg, std)
 
         line = line + '\n'
-        fo.write(line)
+        sline = sline + line
 
-    fo.close()
+    with open(outfile, 'a') as fo:
+        fo.write(sline)
 
 #-----------------------------------------------------------------------------------------------
 #-- separate_data: convert data into a list of each column                                   ---
@@ -184,11 +195,11 @@ def separate_data(data, cols):
     save = []
     for k in range(0, clen):
         save.append([])
-
+    
     for ent in data:
         atemp = re.split('\t+', ent)
         if len(atemp) != clen:
-            continue 
+            continue
         chk = 0
         for k in range(1, clen):
             try:
@@ -196,20 +207,20 @@ def separate_data(data, cols):
             except:
                 chk = 1
                 break
-
+         
         if chk > 0:
             continue
-
+     
         ctime = convert_time_format(atemp[0])
-
+     
         save[0].append(ctime)
         for k in range(1, clen):
             save[k].append(float(atemp[k]))
-
+     
     d_dict = {}
     for k in range(0, clen):
         d_dict[cols[k]] = save[k]
-
+    
     return d_dict
 
 #-----------------------------------------------------------------------------------------------
@@ -226,16 +237,16 @@ def convert_time_format(line):
     year = t[0] + t[1] + t[2] + t[3]
 
     yday = int(t[5] + t[6] + t[7])
-    yday = adjust_digit_len(yday, 3)
+    yday = mcf.add_leading_zero(yday, 3)
 
     hh   = int(t[9] + t[10])
-    hh   = adjust_digit_len(hh)
+    hh   = mcf.add_leading_zero(hh)
 
     mm   = int(t[12] + t[13])
-    mm   = adjust_digit_len(mm)
+    mm   = mcf.add_leading_zero(mm)
 
     ss   = int(t[15] + t[16])
-    ss   = adjust_digit_len(ss)
+    ss   = mcf.add_leading_zero(ss)
     ss   = ss  + t[17] +t[18]       #---- adjust_dgit_len takes only int; so add the dicimal part
 
     stime = year + ':' + yday + ':' + hh + ':' + mm + ':' + ss
@@ -243,32 +254,6 @@ def convert_time_format(line):
     ctime = Chandra.Time.DateTime(stime).secs
 
     return ctime
-
-#-----------------------------------------------------------------------------------------------
-#-- adjust_digit_len: add leading '0' to fill the length of the value string                  --
-#-----------------------------------------------------------------------------------------------
-
-def adjust_digit_len(ss, digit=2):
-    """
-    add leading '0' to fill the length of the value string
-    input:  ss  --- a numeric value (int or float. if float, dicimal part will be dropped)
-    digit   --- length of the digit; default = 2
-    output: lss --- adjust string
-    """
-#
-#--- just in a case the numeric string comes with a leading '0', take int of that value
-#--- to drop the leading zero. this also removes the decimal part
-#
-    try:
-        iss  = int(float(ss))
-        lss  = str(iss)
-        slen = len(lss)
-        for k in range(slen, digit):
-            lss = '0' + lss
-    except:
-        lss  = str(ss)
-    
-    return lss
 
 #-----------------------------------------------------------------------------------------------
 #-- find_instrument:find which instrument is in the forcus from tscpos                        --
@@ -337,7 +322,7 @@ def filtersort(ifile, pos=0):
     output: ifile   --- updated data file
     """
 
-    data  = read_data_file(ifile)
+    data  = mcf.read_data_file(ifile)
     hdr1  = data[0]
     hdr2  = data[1]
     data  = data[2:]
@@ -346,32 +331,12 @@ def filtersort(ifile, pos=0):
 
     ndata = [hdr1, hdr2] + out
 
-    fo    = open(ifile, 'w')
+    line  = ''
     for ent in ndata:
-        fo.write(ent)
-        fo.write('\n')
+        line = line + ent + '\n'
 
-    fo.close()
-
-#-----------------------------------------------------------------------------------------------
-#-- read_data_file: read data file                                                            --
-#-----------------------------------------------------------------------------------------------
-
-def read_data_file(ifile, remove=0):
-
-    try:
-        f= open(ifile, 'r')
-        data = [line.strip() for line in f.readlines()]
-        f.close()
-    except:
-        data = []
-
-    if remove > 0:
-        cmd = 'rm -f ' + ifile
-        os.system(cmd)
-    
-    return data
-
+    with  open(ifile, 'w') as fo:
+        fo.write(line)
 
 #-----------------------------------------------------------------------------------------------
 
@@ -381,7 +346,7 @@ if __name__ == "__main__":
         infile  = sys.argv[1].strip()
         outfile = sys.argv[2].strip()
     else:
-        print "Please give input and output file names"
+        print("Please give input and output file names")
         exit(1)
 
     maverage(infile, outfile)

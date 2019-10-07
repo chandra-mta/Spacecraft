@@ -1,4 +1,4 @@
-#!/usr/bin/env /proj/sot/ska/bin/python
+#!/usr/bin/env /data/mta/Script/Python3.6/envs/ska3/bin/python
 
 #############################################################################################
 #                                                                                           #
@@ -10,7 +10,7 @@
 #                                                                                           #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                                       #
 #                                                                                           #
-#           last update: Feb 21, 2019                                                       #
+#           last update: Jun 26, 2019                                                       #
 #                                                                                           #
 #############################################################################################
 
@@ -21,26 +21,27 @@ import re
 import time
 import Chandra.Time
 import random
+import numpy
 
 #
 #--- reading directory list
 #
-#path = '/data/mta/Script/Python_script2.7/dir_list_py'
 path = '/data/mta/Script/Dumps/Scripts/house_keeping/dir_list'
 
-f    = open(path, 'r')
-data = [line.strip() for line in f.readlines()]
-f.close()
+with open(path, 'r') as f:
+    data = [line.strip() for line in f.readlines()]
 
 for ent in data:
     atemp = re.split(':', ent)
     var  = atemp[1].strip()
     line = atemp[0].strip()
-    exec "%s = %s" %(var, line)
+    exec("%s = %s" %(var, line))
 #
 #--- append path to a private folders
 #
 sys.path.append(bin_dir)
+sys.path.append(mta_dir)
+import mta_common_functions as mcf
 #
 #--- temp writing file name
 #
@@ -71,7 +72,6 @@ def move_tl_files():
 
     input:  none but read from directories
     output: gzipped files in TLfiles/Dumps_mon/IN directories
-
     """
 #
 #--- find today's date in seconds from 1998.1.1
@@ -128,11 +128,10 @@ def get_file_list(dir_path, head=''):
     cmd  = 'ls ' + dir_path + '/*  > '  + zspace
     os.system(cmd)
 
-    f    = open(zspace, 'r')
-    test = f.read(100000000)
-    f.close()
+    with  open(zspace, 'r') as f:
+        test = f.read(100000000)
 
-    rm_file(zspace)
+    mcf.rm_files(zspace)
 
     htest = head.replace("*", "")
 
@@ -147,10 +146,10 @@ def get_file_list(dir_path, head=''):
     mc = re.search('tl', test)
 
     if (mc is not None) and (chk > 0):
-        cmd = 'ls ' + dir_path + '/' + head + '*.tl*  > '  + zspace
+        cmd = 'ls ' + dir_path + '/' + head + '*.tl*  > '  + zspace + ' > /dev/null'
         os.system(cmd)
 
-        out = read_data_file(zspace, remove=1)
+        out = mcf.read_data_file(zspace, remove=1)
 
     else:
         out = []
@@ -168,12 +167,11 @@ def remove_older_files(flist, cdate):
             cdate   --- a cut of date
     output: none 
     """
-
     for ofile in flist:
         chk = find_time(ofile)
 
         if chk < cdate:
-            rm_file(ofile)
+            mcf.rm_files(ofile)
 
 #----------------------------------------------------------------------------
 #-- find_new_files: find a new files in dir1 and make a copy of them in dir2 
@@ -192,7 +190,11 @@ def find_new_files(dir1, dir2, head, fzip=0):
 #
 #--- find files names in dir1 and dir2. assume that dir2 save gipped files
 #
-    mlist = get_file_list(dir1, head=head)
+    olist = get_file_list(dir1, head=head)
+    mlist = []
+    for ent in olist:
+        atemp = re.split('\/', ent)
+        mlist.append(atemp[-1])
 #
 #--- special treatment for Dumps_mon/IN/; files are kept in Done directory
 #
@@ -213,41 +215,57 @@ def find_new_files(dir1, dir2, head, fzip=0):
 #
 #--- compare the file names from dir1 and dir2 and find new files in dir1
 #
-    nlist = []
-    for ent in mlist:
-        atemp = re.split('\/', ent)
-        chk = 0
-        for comp in tlist:
-            if atemp[-1] == comp:
-                chk = 1
-                continue
-        if chk == 0:
-            nlist.append(ent)
+    marray = numpy.array(mlist)
+    tarray = numpy.array(tlist)
+    nlist  = list(numpy.setdiff1d(marray, tarray))
 #
 #--- copy the new files to dir2 and gip it
 #
     for ent in nlist:
-        cmd = 'cp ' + ent + ' ' + dir2 + '/.'
+        cmd = 'cp ' + dir1 + ent + ' ' + dir2 + '/.'
         os.system(cmd)
 #
 #--- if zipping is asked, do so
 #
     if fzip == 1:
-        cmd = 'gzip ' + dir2 + '/*.tl > /dev/null'
-        os.system(cmd)
+        t_list = find_tl_files(dir2)
+        for ent in t_list:
+            cmd = 'gzip -fq ' +  ent
+            os.system(cmd)
+
+#----------------------------------------------------------------------------
+#----------------------------------------------------------------------------
+#----------------------------------------------------------------------------
+
+def find_tl_files(cdir):
+
+    cmd = 'ls ' + cdir  + '/* > ' + zspace
+    os.system(cmd)
+
+    out = mcf.read_data_file(zspace, remove=1)
+    tlist = []
+    for ent in out:
+        mc = re.search('.tl', ent)
+        if mc is not None:
+            mc1 = re.search('.tl.gz', ent)
+            if mc1 is not None:
+                continue
+
+            tlist.append(ent)
+
+    return tlist
 
 #----------------------------------------------------------------------------
 #-- find_time: convert trail log time system to seconds from 1998.1.1      --
 #----------------------------------------------------------------------------
 
-def find_time(file):
+def find_time(ifile):
     """
     convert trail log time system to seconds from 1998.1.1
     input:  file name
     output: time in seconds from 1998.1.1
     """
-
-    atemp = re.split('_', file)
+    atemp = re.split('_', ifile)
     btemp = re.split('\.tl', atemp[-1])
     try:
         time = float(btemp[0]) - tcorrect
@@ -266,17 +284,16 @@ def clean_otg_tl():
     input:  none
     output: none.
     """
-
     cmd = 'ls -t  ' + save_dir + '*.tl* > ' +  zspace
     os.system(cmd)
 
-    files = read_data_file(zspace, remove=1)
+    files = mcf.read_data_file(zspace, remove=1)
 
     dlen = len(files)
     if dlen > 100:
         for i in range (100, dlen):
             try:
-                rm_file(files[i])
+                mcf.rm_files(files[i])
 
             except:
                 break
@@ -284,14 +301,13 @@ def clean_otg_tl():
     if dlen > 50:
         for i in range (50, 100):
             try:
-                if "gz" in file[i]:
+                if "gz" in files[i]:
                     continue
                 else:
-                    cmd = 'gzip  ' + files[i] + ' > /dev/null'
+                    cmd = 'gzip -fq  ' + files[i] 
                     os.system(cmd)
             except:
                 break
-
 
 #----------------------------------------------------------------------------
 #-- make_tl_list: make lists of the current tl files for each category    ---
@@ -303,56 +319,37 @@ def make_tl_list():
     input:  none but read from /data/mta/Script/Dumps/
     output: <d_dir><category>list
     """
-
-    cmd = 'ls ' + d_dir + '*CCDM*>'  + d_dir + 'ccdmlist'
+    cmd = 'ls ' + d_dir + '* > ' + zspace
     os.system(cmd)
+    with open(zspace, 'r') as f:
+        chk = f.read()
 
-    cmd = 'ls ' + d_dir + '*PCAD*>'  + d_dir + 'pcadlist'
-    os.system(cmd)
+    mcf.rm_files(zspace)
 
-    cmd = 'ls ' + d_dir + '*ACIS*>'  + d_dir + 'acislist'
-    os.system(cmd)
-
-    cmd = 'ls ' + d_dir + '*IRU*>'   + d_dir + 'irulist'
-    os.system(cmd)
-
-    cmd = 'ls ' + d_dir + '*MUPS2*>' + d_dir + 'mupslist'
-    os.system(cmd)
-
-#----------------------------------------------------------------------------
-#-- read_data_file: read a data file and put into a data list              --
-#----------------------------------------------------------------------------
-
-def read_data_file(ifile, remove=0):
-    """
-    read a data file and put into a data list
-    input:  ifile   --- data file name
-            remove  --- if it is 1, delete the file after reading it
-    output: data    --- a list of data
-    """
-
-    try:
-        f    = open(ifile, 'r')
-        data = [line.strip() for line in f.readlines()]
-        f.close()
-    except:
-        data = []
-
-    if remove > 0:
-        rm_file(ifile)
-
-    return data
-
-#----------------------------------------------------------------------------
-#----------------------------------------------------------------------------
-#----------------------------------------------------------------------------
-
-def rm_file(ifile):
-
-    if os.path.isfile(ifile):
-        cmd = 'rm -f ' + ifile
+    mc = re.search('CCDM', chk)
+    if mc is not None:
+        cmd = 'ls ' + d_dir + '*CCDM*>'  + d_dir + 'ccdmlist'
         os.system(cmd)
 
+    mc = re.search('PCAD', chk)
+    if mc is not None:
+        cmd = 'ls ' + d_dir + '*PCAD*>'  + d_dir + 'pcadlist'
+        os.system(cmd)
+
+    mc = re.search('ACIS', chk)
+    if mc is not None:
+        cmd = 'ls ' + d_dir + '*ACIS*>'  + d_dir + 'acislist'
+        os.system(cmd)
+
+    mc = re.search('IRU', chk)
+    if mc is not None:
+        cmd = 'ls ' + d_dir + '*IRU*>'   + d_dir + 'irulist'
+        os.system(cmd)
+
+    mc = re.search('MUPS2', chk)
+    if mc is not None:
+        cmd = 'ls ' + d_dir + '*MUPS2*>' + d_dir + 'mupslist'
+        os.system(cmd)
 
 #----------------------------------------------------------------------------
 

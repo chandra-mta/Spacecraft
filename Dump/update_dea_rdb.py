@@ -1,4 +1,4 @@
-#!/usr/bin/env /proj/sot/ska/bin/python
+#!/usr/bin/env /data/mta/Script/Python3.6/envs/ska3/bin/python
 
 #############################################################################################
 #                                                                                           #
@@ -6,7 +6,7 @@
 #                                                                                           #
 #               author: t. isobe (tisobe@cfa.harvard.edu)                                   #
 #                                                                                           #
-#               last update: Feb 20, 2019                                                   #
+#               last update: Jun 25, 2019                                                   #
 #                                                                                           #
 #############################################################################################
 
@@ -31,22 +31,22 @@ ascdsenv['IPCL_DIR'] = "/home/ascds/DS.release/config/tp_template/P011/"
 ascdsenv['ACORN_GUI'] = "/home/ascds/DS.release/config/mta/acorn/scripts/"
 ascdsenv['LD_LIBRARY_PATH'] = "/home/ascds/DS.release/lib:/home/ascds/DS.release/ots/lib:/soft/SYBASE_OSRV15.5/OCS-15_0/lib:/home/ascds/DS.release/otslib:/opt/X11R6/lib:/usr/lib64/alliance/lib"
 ascdsenv['ACISTOOLSDIR'] = "/data/mta/Script/Dumps/Scripts"
-
 #
 #--- read directory list
 #
 path = '/data/mta/Script/Dumps/Scripts/house_keeping/dir_list'
-f    = open(path, 'r')
-data = [line.strip() for line in f.readlines()]
-f.close()
+with open(path, 'r') as f:
+    data = [line.strip() for line in f.readlines()]
 
 for ent in data:
     atemp = re.split(':', ent)
     var  = atemp[1].strip()
     line = atemp[0].strip()
-    exec "%s = %s" %(var, line)
+    exec("%s = %s" %(var, line))
 
 sys.path.append(bin_dir)
+sys.path.append(mta_dir)
+import mta_common_functions as mcf
 #
 #--- temp writing file name
 #
@@ -78,7 +78,7 @@ def update_dea_rdb():
 #--- read today's dump list
 #
     dfile = house_keeping + 'today_dump_files'
-    data  = read_data_file(dfile)
+    data  = mcf.read_data_file(dfile)
 
     for ent in data:
         ifile = '/dsops/GOT/input/' + ent + '.gz'
@@ -114,7 +114,7 @@ def process_deahk(dtype):
     ifile = dtype + '.tmp'
     rdb   = ds_dir + dtype + '.rdb'
 
-    data  = read_data_file(ifile, remove=1)
+    data  = mcf.read_data_file(ifile, remove=1)
 #
 #--- convert time in seconds from 1998.1.1
 #
@@ -126,12 +126,12 @@ def process_deahk(dtype):
 #
 #--- update the rdb file
 #
-    fo    = open(rdb, 'a')
+    line = ''
     for ent in rdata:
-        fo.write(ent)
-        fo.write('\n')
-    fo.close()
+        line = line + ent + '\n'
 
+    with open(rdb, 'a') as fo:
+        fo.write(line)
 
 #-----------------------------------------------------------------------------------------------
 #-- convert_time_format: convert time format from <yyyy>:<ddd>:<hh>:<mm>:<ss> to Chandra time --
@@ -149,8 +149,8 @@ def convert_time_format(data):
 #
     out   = time.strftime("%Y:%j", time.gmtime())
     atemp = re.split(':', out)
-    year  = atemp[0]
-    yday  = atemp[1]
+    year  = int(float(atemp[0]))
+    yday  = int(float(atemp[1]))
     save  = []
     for ent in data:
         atemp = re.split('\s+', ent)
@@ -160,23 +160,23 @@ def convert_time_format(data):
         ytime = float(btemp[1])
         uyear = year
 #
-#--- if today's ydate is the first part of the year, it could be possible that the date is from the last year;
-#--- make sure tat the correspoinding year is a correct one.
+#--- if today's ydate is the first part of the year, it could be possible that 
+#--- the date is from the last year; make sure tat the correspoinding year is a correct one.
 #
         if yday < 10:
             if ydate > 350:
                 uyear = year -1
-        sydate = adjust_digit(ydate, digit=3)
+        sydate = mcf.add_leading_zero(ydate, dlen=3)
 
         ytime /= 86400.0
         hp     = ytime * 24
         hh     = int(hp)
-        lhh    = adjust_digit(hh)
+        lhh    = mcf.add_leading_zero(hh)
         mp     = (hp - hh) *   60
         mm     = int(mp)
-        lmm    = adjust_digit(mm)
+        lmm    = mcf.add_leading_zero(mm)
         ss     = int((mp - mm) * 60)
-        lss    = adjust_digit(ss)
+        lss    = mcf.add_leading_zero(ss)
 
         stime  = str(uyear) + ':' + str(sydate) + ':' + str(lhh) + ':' + str(lmm) + ':' + str(lss)
 
@@ -191,25 +191,6 @@ def convert_time_format(data):
     return save
 
 #-----------------------------------------------------------------------------------------------
-#-- adjust_digit: add leading zero to adjust the length of print out numerical string         --
-#-----------------------------------------------------------------------------------------------
-
-def adjust_digit(aa, digit=2):
-    """
-    add leading zero to adjust the length of print out numerical string
-    input: aa   --- a nemerical value
-    outout: aa  --- adjusted numerical value in string
-    """
-
-    iaa  = int(aa)
-    aa   = str(iaa)
-    alen = len(aa)
-    for k in range(alen, digit):
-        aa = '0' + aa
-
-    return aa
-
-#-----------------------------------------------------------------------------------------------
 #-- time_average: compute avg and std for the data for a given resolution                     --
 #-----------------------------------------------------------------------------------------------
 
@@ -219,16 +200,16 @@ def time_average(data):
     input:  data    --- a list of column data lists
     output: mdata   --- a list of data
     """
-    cdata = convert_to_col_data(data)
+    cdata = mcf.separate_data_into_col_data(data)
     clen  = len(cdata)
     dlen  = len(cdata[1])
 
     save  = []
     for k in range(0, clen):
+        save.append([])
 #
 #--- time is kept in the second column
 #
-        save.append([])
     t_list = cdata[1]
     tlast  = t_list[0]
 
@@ -239,100 +220,62 @@ def time_average(data):
                 save[k].append(cdata[k][m])
 
         else:
-            atime = numpy.mean(save[1])
             ncnt  = len(save[1])
-            line  = "%10e\t%d" % (atime, ncnt)
+            if ncnt < 1:
+                for k in range(0, clen):
+                    save[k] = [cdata[k][m]]
+                    tlast   = t_list[m]
+                continue
+            else:
+                try:
+                    atime = numpy.mean(save[1])
+                except:
+                    atime = save[1][int(0.5*ncnt)]
+    
+                line  = "%10e\t%d" % (atime, ncnt)
 #
 #--- dea data starts from third column
 #
-            for k in range(2, clen):
-                avg = numpy.mean(save[k])
-                std = numpy.std(save[k])
-                line = line + "\t%.4f\t%.5f" % (avg, std)
-            line = line + '\n'
-            mdata.append(line)
-
-            for k in range(0, clen):
-                save[k] = [cdata[k][m]]
-                tlast   = t_list[m]
+                for k in range(2, clen):
+                    try:
+                        avg = numpy.mean(save[k])
+                        std = numpy.std(save[k])
+                    except:
+                        avg = 0.0
+                        std = 0.0
+                    line = line + "\t%.4f\t%.5f" % (avg, std)
+                line = line + '\n'
+                mdata.append(line)
+    
+                for k in range(0, clen):
+                    save[k] = [cdata[k][m]]
+                    tlast   = t_list[m]
 #
 #--- compute left over
 #
     if len(save[1]) > 0:
-        atime = numpy.mean(save[1])
+        try:
+            atime = numpy.mean(save[1])
+        except:
+            try:
+                atime = save[1][0]
+            except:
+                atime = 0.0
+
         ncnt  = len(save[1])
         line  = "%8e\t%d" % (atime, ncnt)
         for k in range(2, clen):
-            avg = numpy.mean(save[k])
-            std = numpy.std(save[k])
+            try:
+                avg = numpy.mean(save[k])
+                std = numpy.std(save[k])
+            except:
+                avg = 0.0
+                std = 0.0
             line = line + "\t%.4f\t%.5f" % (avg, std)
         line = line + '\n'
         mdata.append(line)
 
     return mdata
-
-#-----------------------------------------------------------------------------------------------
-#-- convert_to_col_data: convert a list of data line into a list of column data lists         --
-#-----------------------------------------------------------------------------------------------
-
-def convert_to_col_data(data):
-    """
-    convert a list of data line into a list of column data lists
-    input:  data    --- a list of data lines
-    output: save    --- a list of column data lists
-    """
-
-    atemp = re.split('\s+', data[0])
-    dlen  = len(atemp)
-
-    save  = []
-    for k in range(0, dlen):
-        save.append([])
-
-    for ent in data:
-        atemp = re.split('\s+', ent)
-        for k in range(0, dlen):
-            try:
-                save[k].append(float(atemp[k]))
-            except:
-                save[k].append(atemp[k])
-
-    return save
-
-#-----------------------------------------------------------------------------------------------
-#-- read_data_file: read data file                                                            --
-#-----------------------------------------------------------------------------------------------
-
-def read_data_file(ifile, remove=0):
-    """
-    read data file
-    input:  ifile   --- data file name
-            remove  --- if > 0: remove the file after reading
-    output: data
-    """
-
-    try:
-        f    = open(ifile, 'r')
-        data = [line.strip() for line in f.readlines()]
-        f.close()
-    except:
-        data = []
-
-    if remove > 0:
-        cmd  = 'rm -f ' + ifile
-        os.system(cmd)
-
-    return data
-
-#-----------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------
-
-def rm_file(ifile):
-
-    if os.path.isfile(ifile):
-        cmd = 'rm -f ' + ifile
-        os.system(cmd)
 
 #-----------------------------------------------------------------------------------------------
 
