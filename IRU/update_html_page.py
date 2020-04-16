@@ -1,4 +1,4 @@
-#!/usr/bin/env /proj/sot/ska/bin/python
+#!/usr/bin/env /data/mta/Script/Python3.6/envs/ska3/bin/python
 
 #########################################################################################
 #                                                                                       #
@@ -6,7 +6,7 @@
 #                                                                                       #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                                   #
 #                                                                                       #
-#           last update: Jul 26, 2018                                                   #
+#           last update: Apr 06, 2020                                                   #
 #                                                                                       #
 #########################################################################################
 
@@ -16,44 +16,30 @@ import re
 import string
 import math
 import numpy
-import unittest
 import time
-import pyfits
-import unittest
-from datetime import datetime
-from time import gmtime, strftime, localtime
 import Chandra.Time
-import Ska.engarchive.fetch as fetch
-from pylab import *
-import matplotlib.pyplot as plt
-import matplotlib.font_manager as font_manager
-import matplotlib.lines as lines
-
 #
 #--- reading directory list
 #
 path = '/data/mta/Script/IRU/Scripts/house_keeping/dir_list'
 
-f= open(path, 'r')
-data = [line.strip() for line in f.readlines()]
-f.close()
+with open(path, 'r') as f:
+    data = [line.strip() for line in f.readlines()]
 
 for ent in data:
     atemp = re.split(':', ent)
     var  = atemp[1].strip()
     line = atemp[0].strip()
-    exec "%s = %s" %(var, line)
-
+    exec("%s = %s" %(var, line))
 #
 #--- append  pathes to private folders to a python directory
 #
 sys.path.append(bin_dir)
 sys.path.append(mta_dir)
 #
-#--- import several functions
+#--- import function
 #
-import convertTimeFormat          as tcnv       #---- contains MTA time conversion routines
-import mta_common_functions       as mcf        #---- contains other functions commonly used in MTA scripts
+import mta_common_functions       as mcf
 #
 #--- temp writing file name
 #
@@ -89,11 +75,10 @@ def update_html_page(syear=''):
 #--- read template
 #
     ifile    = house_keeping + 'iru_template'
-    f        = open(ifile, 'r')
-    template = f.read()
-    f.close()
+    with open(ifile, 'r') as f:
+        template = f.read()
 
-    for  year in range(syear, tyear+1):
+    for  year in range(1999, tyear+1):
         mon_b = 1
         mon_e = 12
         if year == 1999:
@@ -165,7 +150,7 @@ def update_page_for_year(myear, tyear, mon_b, mon_e, template):
 #
 #--- link direction buttons
 #
-    direct = create_direct(myear, tyear)
+    direct = create_direct_button(myear, tyear)
 #
 #--- replace the table entry to the template
 #
@@ -177,9 +162,8 @@ def update_page_for_year(myear, tyear, mon_b, mon_e, template):
 #--- create the table
 #
     outfile  = web_dir + 'iru_bias_trend_year' + str(myear) + '.html'
-    fo       = open(outfile, 'w')
-    fo.write(template)
-    fo.close()
+    with open(outfile, 'w') as fo:
+        fo.write(template)
 
 #----------------------------------------------------------------------------------
 #-- create_plot_link: create table entry for a monthly plot link                 --
@@ -192,7 +176,6 @@ def create_plot_link(year, mon):
             mon     --- month
     output: line    --- table entry
     """
-
     tyear = str(year)
     syr   = tyear[2] + tyear[3]
     line = "<th><a href=\"javascript:WindowOpener("
@@ -213,7 +196,6 @@ def fill_blank_plot_link(start, stop):
             stop    --- stopping month
     output: line    --- table entry
     """
-
     line = ''
     for mon in range(start, stop):
         line = line  + '<th>' + mon_list[mon-1].capitalize() + '</th>\n'
@@ -230,18 +212,22 @@ def create_table_link(year):
     input:  year    --- year
     output: line    --- table entry
     """
-
     line = '<th><a href="./iru_bias_trend_year' + str(year) + '.html">'
     line = line + str(year) + '</a></th>\n'
 
     return line
 
 #----------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------
+#-- create_direct_button: create directional button for the page                 --
 #----------------------------------------------------------------------------------
 
-def create_direct(myear, tyear):
-
+def create_direct_button(myear, tyear):
+    """
+    create directional button for the page
+    input:  myear   --- year to be the page is created
+            tyear   --- this year
+    output: line    --- the html code with the button
+    """
     if myear == 1999:
         line = 'Go to: <a href="./iru_bias_trend_year2000.html"><em>Next Year</em></a>'
     elif myear == tyear:

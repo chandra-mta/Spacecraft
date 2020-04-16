@@ -1,4 +1,4 @@
-#!/usr/bin/env /proj/sot/ska/bin/python
+#!/usr/bin/env /data/mta/Script/Python3.6/envs/ska3/bin/python
 
 #########################################################################################
 #                                                                                       #
@@ -6,7 +6,7 @@
 #                                                                                       #
 #           author: t. isobe    (tisobe@cfa.harvard.edu)                                #
 #                                                                                       #
-#           last update: Nov 09, 2018                                                   #
+#           last update: Apr 06, 2020                                                   #
 #                                                                                       #
 #########################################################################################
 
@@ -16,14 +16,12 @@ import re
 import string
 import math
 import numpy
-import unittest
-import time
-import pyfits
-import unittest
-from datetime import datetime
-from time import gmtime, strftime, localtime
-import Chandra.Time
 import Ska.engarchive.fetch as fetch
+import astropy.io.fits      as pyfits
+import time
+from datetime import datetime
+import Chandra.Time
+import unittest
 #
 #--- plotting routine
 #
@@ -32,48 +30,44 @@ import matplotlib as mpl
 if __name__ == '__main__':
 
     mpl.use('Agg')
-
-
 from pylab import *
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
 import matplotlib.lines as lines
-
 #
 #--- reading directory list
 #
 path = '/data/mta/Script/IRU/Scripts/house_keeping/dir_list'
 
-f= open(path, 'r')
-data = [line.strip() for line in f.readlines()]
-f.close()
+with open(path, 'r') as f:
+    data = [line.strip() for line in f.readlines()]
 
 for ent in data:
     atemp = re.split(':', ent)
     var  = atemp[1].strip()
     line = atemp[0].strip()
-    exec "%s = %s" %(var, line)
-
+    exec("%s = %s" %(var, line))
 #
 #--- append  pathes to private folders to a python directory
 #
 sys.path.append(bin_dir)
 sys.path.append(mta_dir)
 #
-#--- import several functions
+#--- import functions
 #
-import convertTimeFormat          as tcnv       #---- contains MTA time conversion routines
-import mta_common_functions       as mcf        #---- contains other functions commonly used in MTA scripts
+import mta_common_functions       as mcf
 #
 #--- temp writing file name
 #
-rtail  = int(time.time())
+import random
+rtail  = int(time.time() * random.random())
 zspace = '/tmp/zspace' + str(rtail)
 #
 #--- some data
 #
 bias_list = ['aogbias1', 'aogbias2', 'aogbias3']
-col_name  = ['time', 'roll_bias_avg', 'roll_bias_std', 'pitch_bias_avg', 'pitch_bias_std', 'yaw_bias_avg', 'yaw_bias_std']
+col_name  = ['time', 'roll_bias_avg', 'roll_bias_std', 'pitch_bias_avg',\
+             'pitch_bias_std', 'yaw_bias_avg', 'yaw_bias_std']
 
 rad2sec = 360.0 * 60. * 60. /(2.0 * math.pi)
 m_list  = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
@@ -100,26 +94,47 @@ def create_iru_bias_plots(run=['w', 'm', 'y', 't'], stime =''):
                         stime is time in seconds from 1998.1.1
                                  time in <yyyy>:<ddd>:<hh>:<mm>:<ss>
                         if it is for year, you can give year
+    output: <web_dir>/Plots_new/<year>/<head>_bias.png (for full plot, without<year>)
+            <web_dir>/Plots_new/<year>/<head>_hist.png (for full plot, without<year>)
     """
-
     for ind in run:
+#
+#--- weekly plots for Weekly report
+#
         if ind == 'w':
             [tstart, tstop, head] = set_weekly_range(stime)
-            print "Weekly: " + str(tstart) + '<-->' + str(tstop)
+            print("Weekly: " + str(tstart) + '<-->' + str(tstop))
             plot_selected_period(tstart, tstop, head)
 
+#
+#--- monthly plot
+#
         elif ind == 'm':
             [tstart, tstop, head] = set_monthly_range(stime)
-            print "Monthly: " + str(tstart) + '<-->' + str(tstop)
+            print("Monthly: " + str(tstart) + '<-->' + str(tstop))
             plot_selected_period(tstart, tstop, head)
-
+#
+#--- if today is the less than 5th day of the month, create dummy monthly plots
+#--- this is because the main function creates only the previous month's plots
+#--- in that time period
+#
+            add_empty_plot_page('mon')
+#
+#--- yearly plot
+#
         elif ind == 'y':
             [tstart, tstop, head] = set_yearly_range(stime)
-            print "Yearly: " + str(tstart) + '<-->' + str(tstop)
+            print("Yearly: " + str(tstart) + '<-->' + str(tstop))
             plot_selected_period(tstart, tstop, head)
-
+#
+#--- if today is the less than 5th day of the year, create dummy yearly plots
+#
+            add_empty_plot_page('year')
+#
+#--- full range plot
+#
         elif ind == 't':
-            print "Full period"
+            print("Full period")
             [tstart, tstop, head] =set_full_range()
             plot_selected_period(tstart, tstop, head, tunit=1)
 
@@ -188,7 +203,6 @@ def read_data(tstart, tstop):
     output:  out    --- a list of arrays of data
                 see: col_name for which data are extracted
     """
-
     byear = find_year(tstart)
     eyear = find_year(tstop)
 
@@ -233,7 +247,6 @@ def find_year(stime):
     input:  stime   --- time in seconds from 1998.1.1
     output: year    --- year
     """
-
     date  = Chandra.Time.DateTime(stime).date
     atemp = re.split(':', date)
     year  = int(atemp[0])
@@ -252,15 +265,23 @@ def select_out_data(data, tstart, tstop):
             tstop   --- stopping time in seconds from 1998.1.1
     output: save    --- a list of arrays of data of the specified time period
     """
-
-    dtime = numpy.array(data[0])
-    index = [(dtime >= tstart) &(dtime < tstop)]
+#
+#--- drop nan data
+#
+    dtime  = numpy.array(data[0])
+    index  = ~numpy.isnan(dtime)
+    dtime  = dtime[index]
+#
+#--- select data for the time period
+#
+    index2 = [(dtime >= tstart) &(dtime < tstop)]
     save  = []
     for  k in range(0, len(data)):
         atemp = numpy.array(data[k])
         btemp = atemp[index]
+        ctemp = btemp[index2]
 
-        save.append(btemp)
+        save.append(ctemp)
 
     return save
 
@@ -274,7 +295,6 @@ def find_shift(data):
     input:  data    --- a list of data
     output: save    --- a list of shift. len(save) = len(data) -1
     """
-    
     save = []
     for k in [1, 3, 5]:
         adata = data[k]  * rad2sec
@@ -460,7 +480,8 @@ def hist_plot(data1, data2, data3, outname):
 #--- first panel
 #
     ax1 = plt.subplot(311)
-    n1, bins1, patches1 = plt.hist(data1, bins=bins, range=[xmin, xmax], facecolor=color, alpha=alpha, histtype='stepfilled', log=True)
+    n1, bins1, patches1 = plt.hist(data1, bins=bins, range=[xmin, xmax], facecolor=color,\
+                                    alpha=alpha, histtype='stepfilled', log=True)
 #
 #--- fix the plotting range
 #
@@ -477,7 +498,8 @@ def hist_plot(data1, data2, data3, outname):
 #--- second panel
 #
     ax2 = plt.subplot(312)
-    n2, bins2, patches2 = plt.hist(data2, bins=bins, range=[xmin, xmax], facecolor=color, alpha=alpha, histtype='stepfilled', log=True)
+    n2, bins2, patches2 = plt.hist(data2, bins=bins, range=[xmin, xmax], facecolor=color,\
+                                    alpha=alpha, histtype='stepfilled', log=True)
     plt.xlim(xmin, xmax)
 
     ax2.text(0.05, 0.95, "Pitch", transform=ax2.transAxes, fontsize=fsize, verticalalignment='top')
@@ -492,7 +514,9 @@ def hist_plot(data1, data2, data3, outname):
 #--- thrid panel
 #
     ax3 = plt.subplot(313)
-    n3, bins3, patches3 = plt.hist(data3, bins=bins, range=[xmin, xmax], facecolor=color, alpha=alpha, histtype='stepfilled', log=True)
+    n3, bins3, patches3 = plt.hist(data3, bins=bins, range=[xmin, xmax], facecolor=color, \
+                                    alpha=alpha, histtype='stepfilled', log=True)
+
     ax3.text(0.05, 0.95, "Yaw", transform=ax3.transAxes, fontsize=fsize, verticalalignment='top')
     plt.xlim(xmin, xmax)
 
@@ -524,7 +548,6 @@ def convert_time_format(t_list, dformat=0):
                       of the starting year and day of year will increase 
                       beyond 365/366. 
     """
-
     save  = []
     byear = 0
     for ent in t_list:
@@ -533,7 +556,7 @@ def convert_time_format(t_list, dformat=0):
         year  = int(atemp[0])
         if byear == 0:
             byear = year
-            if tcnv.isLeapYear(byear) == 1:
+            if mcf.is_leapyear(byear):
                 base = 366
             else:
                 base = 365
@@ -557,7 +580,7 @@ def convert_time_format(t_list, dformat=0):
 #
         else:
             if year > byear:
-                if tcnv.isLeapYear(byear) == 1:
+                if mcf.is_leapyear(byear):
                     base = 366
                 else:
                     base = 365
@@ -582,7 +605,6 @@ def set_x_range(x, ichk=0):
     output: xmin    --- x min
             xmax    --- x max
     """
-
     xmin = min(x)
     xmax = max(x)
     diff = xmax - xmin
@@ -611,9 +633,12 @@ def set_y_range(y, chk=0):
     output: ymin    --- y min
             ymax    --- y max
     """
+#
+#--- range setting for full range plots
+#
     if chk == 1:
-        ymin  = -2.5
-        ymax  =  0.6
+        ymin  = -3.5
+        ymax  =  1.0
     else:
         ymin  = numpy.percentile(y, 2.0)
 #
@@ -780,7 +805,15 @@ def set_yearly_range(year=''):
 #--- find  year of today
 #
     if year == '':
-        year  = int(time.strftime("%Y", time.gmtime()))
+        out   = time.strftime("%Y:%j", time.gmtime())
+        atemp = re.split(':', out)
+        year  = int(float(atemp[0]))
+        yday  = int(float(atemp[1]))
+#
+#--- today is less than the 5th day of the year, use the previous year
+#
+        if yday < 5:
+            year -= 1
     else:
         try:
             check = float(year)
@@ -859,6 +892,52 @@ def findallwdays(year, w):
         yield d
         d += datetime.timedelta(days = 7)
 
+#----------------------------------------------------------------------------------
+#-- add_empty_plot_page: create empty plots if the regular plots are created for the previous period 
+#----------------------------------------------------------------------------------
+
+def add_empty_plot_page(period):
+    """
+    create empty plots if the regular plots are created for the previous period
+    input:  period  --- 'mon' or 'year'; which period to caeate the empnty plots
+    output: <wb_dir>/Plot_new/<head>_<hist/bias>.png
+    """
+#
+#--- today's date
+#
+    out   = time.strftime('%y:%m:%d:%Y:%j', time.gmtime())
+    atemp = re.split(':', out)
+    year  = atemp[0]
+    mon   = int(float(atemp[1]))
+    mday  = int(float(atemp[2]))
+    fyear = atemp[3]
+    yday  = int(float(atemp[4]))
+    chk   = 0
+#
+#--- if this is for month plot, check whether today is less than 5th day of the month
+#
+    if period == 'mon':
+        if mday < 5:
+            lmon = m_list(mon-1)
+            head = lmon + year
+            chk  = 1
+#
+#--- if this is for year plot, check whether today is less than 5th day of the year
+#
+    else:
+        if yday < 5:
+            head = fyear
+            chk  = 1
+#
+#--- if so, create the empty plots
+#
+    if chk > 0:
+        odir  =  web_dir + 'Plots_new/' + str(fyear) + '/'
+        for tail in ['bias', 'hist']:
+            out = odir + head + '_' + tail + '.png'
+            cmd = 'cp ' + house_keeping + 'no_plot.png ' + out 
+            os.system(cmd)
+
 
 #-----------------------------------------------------------------------------------------
 #-- TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST    ---
@@ -875,13 +954,13 @@ class TestFunctions(unittest.TestCase):
         thead = '2018_187_193'
         [start, stop, pref] = set_weekly_range(test)
 
-        print "Weekly setting:  "  + str(start) +'<-->' +  str(stop) + '<--->' +  pref
-        print "Expected:        "  + str(647222394) + '<-->' + str(647827194) + '<--->' + thead
+        print("Weekly setting:  "  + str(start) +'<-->' +  str(stop) + '<--->' +  pref)
+        print("Expected:        "  + str(647222394) + '<-->' + str(647827194) + '<--->' + thead)
 
         test  = '2018:001:00:00:00'
         [start, stop, pref] = set_weekly_range(test)
-        print "\nWeekly setting2: "  + str(start) +'<-->' +  str(stop) + '<--->' +  pref
-        print "\n\n"
+        print("\nWeekly setting2: "  + str(start) +'<-->' +  str(stop) + '<--->' +  pref)
+        print("\n\n")
 
 #------------------------------------------------------------
 
@@ -889,13 +968,13 @@ class TestFunctions(unittest.TestCase):
 
         test  = 647740794
         [start, stop, pref] = set_monthly_range(test)
-        print "Monthly setting:  "  + str(start) +'<-->' +  str(stop) + '<--->' +  pref
-        print "Expected:         646790469<-->649468869<--->jul18"
+        print("Monthly setting:  "  + str(start) +'<-->' +  str(stop) + '<--->' +  pref)
+        print("Expected:         646790469<-->649468869<--->jul18")
 
         test  = '2018:001:00:00:00'
         [start, stop, pref] = set_monthly_range(test)
-        print "\nMonthly setting2: "  + str(start) +'<-->' +  str(stop) + '<--->' +  pref
-        print "\n\n"
+        print("\nMonthly setting2: "  + str(start) +'<-->' +  str(stop) + '<--->' +  pref)
+        print("\n\n")
 
 #------------------------------------------------------------
 
@@ -903,7 +982,7 @@ class TestFunctions(unittest.TestCase):
 
         year = 2017
         [start, stop, pref] = set_yearly_range(year)
-        print "Yearly setting: "  + str(start) +'<-->' +  str(stop) + '<--->' +  pref
+        print("Yearly setting: "  + str(start) +'<-->' +  str(stop) + '<--->' +  pref)
 
 #----------------------------------------------------------------------------------
 
@@ -921,14 +1000,14 @@ if __name__ == "__main__":
             stime = ''
 
         elif sys.argv[1].lower() in ['h', '-h','-help']:
-            print "Usage: create_iru_bias_plots.py <ind>"
-            print "<ind>:   test    --- run unit test"
-            print "         t       --- create all plots"
-            print "         time    --- time where you want to create plots (week, month, year)"
-            print "         \"\"      --- create plots for the most recent period for all\n\n"
-            print "create_iru_bias_plots.py <ind> <time>"
-            print "         ind     --- string of combination of: 'w', 'm', 'y', 't' e.g, wmy"
-            print "         time    --- time in Chandra time or format of <yyyy>:<ddd>:<hh>:<mm>:<ss>"
+            print("Usage: create_iru_bias_plots.py <ind>")
+            print("<ind>:   test    --- run unit test")
+            print("         t       --- create all plots")
+            print("         time    --- time where you want to create plots (week, month, year)")
+            print("         \"\"      --- create plots for the most recent period for all\n\n")
+            print("create_iru_bias_plots.py <ind> <time>")
+            print("         ind     --- string of combination of: 'w', 'm', 'y', 't' e.g, wmy")
+            print("         time    --- time in Chandra time or format of <yyyy>:<ddd>:<hh>:<mm>:<ss>")
             exit(1)
 
         else:

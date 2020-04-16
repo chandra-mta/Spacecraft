@@ -1,4 +1,4 @@
-#!/usr/bin/env /proj/sot/ska/bin/python
+#!/usr/bin/env /data/mta/Script/Python3.6/envs/ska3/bin/python
 
 #####################################################################################
 #                                                                                   #
@@ -6,7 +6,7 @@
 #                                                                                   #
 #               author: t. isobe (tisobe@cfa.harvard.edu)                           #
 #                                                                                   #
-#               last updae: Jul 26, 2018                                            #
+#               last updae: Apr 06, 2020                                            #
 #                                                                                   #
 #####################################################################################
 
@@ -16,43 +16,37 @@ import re
 import string
 import math
 import numpy
-import unittest
 import time
-import pyfits
-import unittest
-from datetime import datetime
-from time import gmtime, strftime, localtime
+import astropy.io.fits  as pyfits
 import Chandra.Time
 import Ska.engarchive.fetch as fetch
+import random
 #
 #--- reading directory list
 #
 path = '/data/mta/Script/IRU/Scripts/house_keeping/dir_list'
 
-f= open(path, 'r')
-data = [line.strip() for line in f.readlines()]
-f.close()
+with open(path, 'r') as f:
+    data = [line.strip() for line in f.readlines()]
 
 for ent in data:
     atemp = re.split(':', ent)
     var  = atemp[1].strip()
     line = atemp[0].strip()
-    exec "%s = %s" %(var, line)
-
+    exec("%s = %s" %(var, line))
 #
 #--- append  pathes to private folders to a python directory
 #
 sys.path.append(bin_dir)
 sys.path.append(mta_dir)
 #
-#--- import several functions
+#--- import functions
 #
-import convertTimeFormat          as tcnv       #---- contains MTA time conversion routines
-import mta_common_functions       as mcf        #---- contains other functions commonly used in MTA scripts
+import mta_common_functions       as mcf        
 #
 #--- temp writing file name
 #
-rtail  = int(time.time())
+rtail  = int(time.time() * random.random())
 zspace = '/tmp/zspace' + str(rtail)
 #
 #--- some data
@@ -70,7 +64,6 @@ def run_iru_gyro_bias(tstart, tstop):
             tstop   --- stopping time
     output: <data_dir>/iru_gyro_bias_year<year>.fits
     """
-
     if tstart == '':
         [y_list, b_list, e_list] = find_start_and_stop_time()
         for k in range(0, len(y_list)):
@@ -116,7 +109,7 @@ def append_new_data(year, tstart, tstop):
 #--- if the fits data file exists, append. otherwise, create it
 #
     if os.path.isfile(mfile):
-        appendFitsTable(mfile, 'bias.fits', 'temp.fits')
+        append_fits_table(mfile, 'bias.fits', 'temp.fits')
 
         cmd = 'mv temp.fits ' + mfile
         os.system(cmd)
@@ -168,13 +161,13 @@ def find_start_and_stop_time():
 #
     else:
         dfile2 = data_dir + 'iru_gyro_bias_year' + str(year-1) + '.fits'
-        if os.pathisfile(dfile2):
-            fout   = pyfits.open(dfile)
+        if os.path.isfile(dfile2):
+            fout   = pyfits.open(dfile2)
             data   = fout[1].data
             dlast  = data['time'][-1]
             fout.close()
 
-            ybound = str(year) + '001:00:00:00'
+            ybound = str(year) + ':001:00:00:00'
             stime  = Chandra.Time.DateTime(ybound).secs
             etime  = Chandra.Time.DateTime(date).secs
 
@@ -197,7 +190,6 @@ def read_data(tstart, tstop):
             tstop   --- stopping time in seconds from 1998.1.1
     output: data    --- a list of arrays of data
     """
-
     save = []
     for msid in bias_list:
 
@@ -220,7 +212,6 @@ def compute_avg(data, span=3600.0):
             span    --- time span of which you want to compute avg/std; default: 3600
     output: out     --- a list of arrays of the data
     """
-
     c_len = len(data)
 #
 #--- assume that the first array is time in seconds
@@ -289,10 +280,10 @@ def create_new_data_fits(data, out='bias.fits'):
     tbhdu.writeto(out)
 
 #----------------------------------------------------------------------------------
-#-- appendFitsTable: Appending one table fits file to the another                --
+#-- append_fits_table: Appending one table fits file to the another              --
 #----------------------------------------------------------------------------------
 
-def appendFitsTable(file1, file2, outname, extension = 1):
+def append_fits_table(file1, file2, outname, extension = 1):
 
     """
     Appending one table fits file to the another
@@ -302,7 +293,6 @@ def appendFitsTable(file1, file2, outname, extension = 1):
     outname --- the name of the new fits file
     Output: a new fits file "outname"
     """
-    
     t1 = pyfits.open(file1)
     t2 = pyfits.open(file2)
 #
@@ -331,7 +321,9 @@ def appendFitsTable(file1, file2, outname, extension = 1):
 #----------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-
+#
+#--- tstart an tstop are in seconds from 1998.1.1
+#
     if len(sys.argv) == 3:
         tstart = float(sys.argv[1])
         tstop  = float(sys.argv[2])
@@ -352,6 +344,6 @@ if __name__ == "__main__":
 #        tstart = Chandra.Time.DateTime(date1).secs
 #        tstop  = Chandra.Time.DateTime(date2).secs
 #
-#        print "Running: " + str(date1) + '<-->' + str(date2)
+#        print("Running: " + str(date1) + '<-->' + str(date2))
 #
 #        run_iru_gyro_bias(tstart, tstop)

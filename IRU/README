@@ -25,7 +25,7 @@ run_iru_gyro_bias.py        ---- extract data with sot fetch function
 create_iru_bias_plots.py    ---- create iru bias trend and histogram plots
 
     data needed:
-        <data_dir>/iru_gyro_bias_year<year.fits
+        <data_dir>/iru_gyro_bias_year<year>.fits
 
     output:
         <web_dir>/Plots_new/<year>/<year>_<bias/hist>.png               #--- year plot
@@ -34,7 +34,7 @@ create_iru_bias_plots.py    ---- create iru bias trend and histogram plots
 
         <web_dir>?Plots_new/total_<bias/hist>.png                       #--- entire period
 
-    Note, create_iru_bias_plots.py -h to get help
+    Note, weekly plots are for the Weekly report and do not show up on the IRU page.
 
 update_html_page.py         ---- update html pages
 
@@ -54,7 +54,7 @@ Directory
 '/data/mta/Script/IRU/Scripts/house_keeping/'   : house_keeping
 '/data/mta/Script/IRU/Data/'                    : data_dir
 '/data/mta/Script/IRU/Exc/'                     : exc_dir
-'/data/mta/Script/Python_script2.7/'            : mta_dir
+'/data/mta/Script/Python3.6/MTA/'               : mta_dir
 '/data/mta4/www/DAILY/mta_pcad/IRU/'            : web_dir
 
 
@@ -62,6 +62,9 @@ Directory
 Data
 ----
 The data fits files have the following columns:
+
+    <data_dir>/iru_gyro_bias_year<year>.fits
+
     col1    time
     col2    roll_bias_avg
     col3    roll_bias_std
@@ -69,6 +72,8 @@ The data fits files have the following columns:
     col5    pitch_bias_std
     col6    yaw_bias_avg
     col7    yaw_bias_std
+
+    the data are one hour average. 
 
 -----------
 Web Address
@@ -79,6 +84,6 @@ https://cxc.cfa.harvard.edu/mta_days/mta_pcad/IRU/iru_bias_trend.html
 --------
 Cron Job
 --------
-r2d2-v as mta
+luke-v as mta
 
 05 05 * *  5 cd /data/mta/Script/IRU/Exc; /data/mta/Script/IRU/Scripts/iru_gyro_wrap_script > $HOME/Logs/iru_gyro_bias.cron 
