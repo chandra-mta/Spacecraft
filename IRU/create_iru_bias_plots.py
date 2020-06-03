@@ -6,7 +6,7 @@
 #                                                                                       #
 #           author: t. isobe    (tisobe@cfa.harvard.edu)                                #
 #                                                                                       #
-#           last update: Apr 06, 2020                                                   #
+#           last update: Jun 03, 2020                                                   #
 #                                                                                       #
 #########################################################################################
 
@@ -918,7 +918,7 @@ def add_empty_plot_page(period):
 #
     if period == 'mon':
         if mday < 5:
-            lmon = m_list(mon-1)
+            lmon = m_list[mon-1]
             head = lmon + year
             chk  = 1
 #
