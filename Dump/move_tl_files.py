@@ -4,13 +4,13 @@
 #                                                                                           #
 #       move_tl_files.py: manage # of trail files in the directories                        #
 #                                                                                           #
-#                   the file is kept in /data/mta/Script/Dumps/ for 3 days                  #
+#                   the file is kept in /data/mta4/Script/Dumps/ for 3 days                 #
 #                   after that the file is zipped and moved to TLfiles and kept another     #
 #                   3 days. after that, the files will be deleted                           #
 #                                                                                           #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                                       #
 #                                                                                           #
-#           last update: Jun 26, 2019                                                       #
+#           last update: Jan 11, 2021                                                       #
 #                                                                                           #
 #############################################################################################
 
@@ -26,7 +26,7 @@ import numpy
 #
 #--- reading directory list
 #
-path = '/data/mta/Script/Dumps/Scripts/house_keeping/dir_list'
+path = '/data/mta4/Script/Dumps/Scripts/house_keeping/dir_list'
 
 with open(path, 'r') as f:
     data = [line.strip() for line in f.readlines()]
@@ -65,7 +65,7 @@ s_dir = main_dir + 'Dumps_mon/Done/'
 def move_tl_files():
     """
     manage # of trace files in the directories
-        the file is kept in /data/mta/Script/Dumps/ for 3 days
+        the file is kept in /data/mta4/Script/Dumps/ for 3 days
         and also gizpped files are save in two different directory
         after 3 days, the files are removed from the main directory, but
         other copies are kept another 6 days.
@@ -125,31 +125,24 @@ def get_file_list(dir_path, head=''):
     output: out         --- a list of files
     """
 
-    cmd  = 'ls ' + dir_path + '/*  > '  + zspace
-    os.system(cmd)
-
-    with  open(zspace, 'r') as f:
-        test = f.read(100000000)
-
-    mcf.rm_files(zspace)
-
-    htest = head.replace("*", "")
-
-    chk  = 0
-    if htest== '':
-        chk = 1
-    else:
-        mc = re.search(htest, test)
-        if mc is not None:
-            chk = 1
-
-    mc = re.search('tl', test)
-
-    if (mc is not None) and (chk > 0):
-        cmd = 'ls ' + dir_path + '/' + head + '*.tl*  > '  + zspace + ' > /dev/null'
+    out = []
+    if len(os.listdir(dir_path)) > 0:
+        cmd  = 'ls ' + dir_path + '/*  > '  + zspace
         os.system(cmd)
 
-        out = mcf.read_data_file(zspace, remove=1)
+        with  open(zspace, 'r') as f:
+            test = f.read(100000000)
+
+        cmd = 'rm -rf ' + zspace
+        os.system(cmd)
+
+        mc = re.search('tl', test)
+
+        if (mc is not None) and (chk > 0):
+            cmd = 'ls ' + dir_path + '/' + head + '*.tl*  > '  + zspace 
+            os.system(cmd)
+    
+            out = mcf.read_data_file(zspace, remove=1)
 
     else:
         out = []
@@ -316,7 +309,7 @@ def clean_otg_tl():
 def make_tl_list():
     """
     make lists of the current tl files for each category
-    input:  none but read from /data/mta/Script/Dumps/
+    input:  none but read from /data/mta4/Script/Dumps/
     output: <d_dir><category>list
     """
     cmd = 'ls ' + d_dir + '* > ' + zspace
