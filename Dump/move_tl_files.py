@@ -10,7 +10,7 @@
 #                                                                                           #
 #           author: t. isobe (tisobe@cfa.harvard.edu)                                       #
 #                                                                                           #
-#           last update: Jan 11, 2021                                                       #
+#           last update: Jan 12, 2021                                                       #
 #                                                                                           #
 #############################################################################################
 
@@ -138,7 +138,7 @@ def get_file_list(dir_path, head=''):
 
         mc = re.search('tl', test)
 
-        if (mc is not None) and (chk > 0):
+        if mc is not None:
             cmd = 'ls ' + dir_path + '/' + head + '*.tl*  > '  + zspace 
             os.system(cmd)
     
