@@ -1,0 +1,55 @@
+This repository contains spacecraft related scripts
+
+ACA
+---
+ACA/Slot Trending: magnitude and positional error trends for fiducial lights and guide stars on various time scales.
+
+ACIS Corner Pixel Trends
+------------------------
+This set of scripts show plots of average corner pixel centroid slope and mean for ACIS observations. Separate plots are shown for FAINT MODE (3X3) and VFAINT MODE (5X5) observations.
+
+ACIS Radiation Correlations 
+---------------------------
+This set of scripts creates ACIS radiation related plots.   --- RETIRED
+
+
+ACIS Rejected Event
+-------------------
+Create plots of stat1 quantities, showing on-board rejected events.
+The average EVTSENT, DROP_AMP, DROP_GRD, and THR_PIX obtained from L1 acis*stat1.fits
+files are plotted for each observation. CTI observations are plotted separately
+from regular science observations.
+
+
+Dump (RDB Data Filtering)
+-------------------------
+This directory holds scripts which extract OTG and CCDM related data from dump data (*Dump_EM_*)
+
+Gratings Observation 
+--------------------
+This set of scripts create various gratings trends created from the analysis results done by HETG Analysis Kit ("HAK"). 
+
+HRMA Focus
+----------
+This set of scripts create HRMA focus related plots.
+
+IRU
+---
+Extract IRU gyro bias data from archive and create trend plots
+
+MTA Deriv
+---------
+contains the scripts to update trending data in the directory /data/mta4/Deriv.
+
+OTG (RDB Data Filtering)
+------------------------
+This set of scripts which extract OTG and CCDM related data from dump data (*Dump_EM_*)
+
+SIM Movement Trending
+---------------------
+this set of scripts related to creation of SIM movement plots in /data/mta_www/mta_sim/
+
+SIM Temperature
+----------------
+This set of scripts collect sim translation/temperature data and creates trend plots.
+
